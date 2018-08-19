@@ -1,5 +1,5 @@
 from person import Person
-from config import PLAYER_CONFIG
+from config import PLAYER_CONFIG, GRID_CONFIG
 
 
 class Player(Person):
@@ -14,10 +14,74 @@ class Player(Person):
         if width is None:
             width = 1 * PLAYER_CONFIG['SIZE']
         if speed is None:
-            speed = 1 * PLAYER_CONFIG['SIZE']
+            speed = 1
         super(Player, self).__init__(name, height, width, speed)
         self.lives = 5
         self.power = []
         self.ammo = []
         self.coins = 0
         self.score = 0
+
+    def createMe(self, scene=None):
+        for i in range(self.pos['y'], self.pos['y'] - self.height, -1):
+            for j in range(self.width):
+                scene._grid[i][self.pos['x']+j] = GRID_CONFIG['CODE']['PLAYER']
+
+    def clearMe(self, scene=None):
+        for i in range(self.pos['y'], self.pos['y'] - self.height, -1):
+            for j in range(self.width):
+                scene._grid[i][self.pos['x']+j] = GRID_CONFIG['CODE']['BLANK']
+
+    def check_surround(self, scene=None, pos=None, direction=None):
+        for i in range(pos['y'], pos['y'] - self.height, -1):
+            for j in range(self.width):
+                if (scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['BLANK'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['CLOUD'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['EXIT'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['GRASS']) or scene._grid[i][pos['x']+j] == GRID_CONFIG['CODE']['PLAYER']:
+                    # if direction is not None:
+                    #     if direction == 'LEFT':
+                    #         return {'code': False, 'allowed'}
+                    # else:
+                    return False
+        return True
+
+    def move(self, action=None, scene=None):
+        '''Function to handle movement of the person'''
+        try:
+            if scene is None:
+                raise AttributeError
+            if self.pos['y'] < self.base and action == 'JUMP'and (scene._grid[self.pos['y']+1][self.pos['x']] != GRID_CONFIG['CODE']['OBSTACLE']):
+                return
+            elif self.pos['x'] == scene.window_left and action == 'LEFT':
+                raise IndexError
+            elif self.pos['x'] == (GRID_CONFIG['ACTUAL_WIDTH']-PLAYER_CONFIG['SIZE']-1) and action == 'RIGHT':
+                raise IndexError
+            else:
+                if action == 'LEFT':
+                    if self.check_surround(scene=scene, pos={'x': self.pos['x'] - (1 * self.speed), 'y': self.pos['y']}):
+                        self.pos['x'] = self.pos['x'] - (1 * self.speed)
+                elif action == 'RIGHT':
+                    if self.check_surround(scene=scene, pos={'x': self.pos['x'] + (1 * self.speed), 'y': self.pos['y']}):
+                        if self.pos['x'] > ((scene.window_left + scene.window_right)/2):
+                            scene.shift_window(player=self)
+                        self.pos['x'] = self.pos['x'] + \
+                            (1 * self.speed)
+                elif action == 'JUMP':
+                    if self.check_surround(scene=scene, pos={'x': self.pos['x'], 'y': self.pos['y'] - 1}):
+                        self.jump_from = self.base - self.pos['y']
+                        self.gravity = False
+                        self.pos['y'] = self.pos['y'] - 1
+                else:
+                    pass
+
+                if (self.pos['y'] < self.base) and self.gravity and (scene._grid[self.pos['y']+1][self.pos['x']] != GRID_CONFIG['CODE']['OBSTACLE']):
+                    if self.check_surround(scene=scene, pos={'x': self.pos['x'], 'y': self.pos['y'] + 1}):
+                        self.pos['y'] = self.pos['y'] + 1
+                if (not self.gravity) and ((self.base - self.jump_from - self.max_jump) != self.pos['y']) and action != 'JUMP'and (scene._grid[self.pos['y']-(1*self.height)][self.pos['x']] != GRID_CONFIG['CODE']['OBSTACLE']):
+                    if self.check_surround(scene=scene, pos={'x': self.pos['x'], 'y': self.pos['y'] - 1}):
+                        self.pos['y'] = self.pos['y'] - 1
+                elif (not self.gravity) and ((self.base - self.jump_from - self.max_jump) == self.pos['y']) and action != 'JUMP':
+                    self.gravity = True
+
+                if (not self.gravity) and ((self.base - self.jump_from - self.max_jump) != self.pos['y']) and action != 'JUMP' and (scene._grid[self.pos['y']-(1*self.height)][self.pos['x']] == GRID_CONFIG['CODE']['OBSTACLE']):
+                    self.gravity = True
+        except(IndexError, AttributeError):
+            return
