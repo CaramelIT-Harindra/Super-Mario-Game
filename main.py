@@ -11,7 +11,7 @@ from input import Get, input_to
 GAME_PLAY = True
 
 scene = Scene()
-player = Player(name="Mario", height=None, width=None, speed=2)
+player = Player(name="Mario", height=None, width=None, speed=1)
 scene.createMe()
 player.createMe(scene=scene)
 getch = Get()
@@ -24,9 +24,14 @@ while GAME_PLAY:
     if new_score > player.score:
         player.score = new_score
 
-    print(Fore.WHITE + "Score: {0}".format(player.score))
+    print(Fore.WHITE +
+          "Score: {0}\t\tLives: {1}".format(player.score, player.lives))
 
     scene.render(player=player)
+
+    if player.lives <= 0:
+        result = False
+        break
 
     if player.pos['x'] > (scene.actual_width - config.PLAYER_CONFIG['SIZE'] - 5):
         result = True
@@ -42,7 +47,6 @@ while GAME_PLAY:
             key=key_pressed.lower(), player=player, scene=scene)
     else:
         GAME_PLAY = helpers.keyAction(key=None, player=player, scene=scene)
-
     # time.sleep(1/config.FRAME_RATE)
 
 if result is False:

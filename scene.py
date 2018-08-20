@@ -1,6 +1,7 @@
 from config import GRID_CONFIG, PLAYER_CONFIG
 from colorama import Fore, Back, Style, init
 from random import randint
+from enemy import Enemy
 
 # init(autoreset=True)
 
@@ -18,6 +19,8 @@ class Scene:
         self.window_right = GRID_CONFIG['WIDTH'] - 1
         self._grid = [[GRID_CONFIG['CODE']['BLANK']]
                       * self.actual_width for n in range(self.height+2)]
+        self.enemies = []
+        self.numEnemies = 1
         self.grass_pos = []
         self.numGrass = 15
         self.pit_pos = []
@@ -35,6 +38,14 @@ class Scene:
         else:
             self.applyGrass()
             self.applyExitPipe()
+
+            for i in range(self.numEnemies):
+                if self.enemies[i].lives <= 0:
+                    self.enemies.pop(i)
+                    self.numEnemies -= 1
+                    continue
+                self.enemies[i].showMe(scene=self)
+
             for row in range(self.actual_height):
                 for col in range(self.window_left, self.width+self.window_left, 1):
                     if self._grid[row][col] == GRID_CONFIG['CODE']['BLANK']:
@@ -44,7 +55,7 @@ class Scene:
                     elif self._grid[row][col] == GRID_CONFIG['CODE']['CLOUD']:
                         print(Back.WHITE + " ", end='')
                     elif self._grid[row][col] == GRID_CONFIG['CODE']['ENEMY']:
-                        pass    # Print ENEMY
+                        print(Back.MAGENTA + " ", end='')
                     elif self._grid[row][col] == GRID_CONFIG['CODE']['OBSTACLE']:
                         print(Back.LIGHTBLACK_EX + " ", end='')
                     elif self._grid[row][col] == GRID_CONFIG['CODE']['EXIT']:
@@ -62,7 +73,12 @@ class Scene:
         self.createPits()
         self.createGrass()
         self.createObstacles()
+        # self.createEnemies()
         self.applyExitPipe()
+
+        self.enemies.append(Enemy(name="Enemy", height=None,
+                                  width=None, speed=None, x=4, y=self.height-1))
+        self.enemies[0].createMe(scene=self, code=GRID_CONFIG['CODE']['ENEMY'])
 
         offset = 4
         for h in range(5, self.height - 10, 2):
@@ -197,9 +213,42 @@ class Scene:
         for count in range(self.numGrass):
             for j in range(self.height - 1, self.height - 3, -1):
                 for k in range(0, 3, 1):
-                    if self._grid[j][k + self.grass_pos[count-1]] == GRID_CONFIG['CODE']['BLANK']:
-                        self._grid[j][k + self.grass_pos[count-1]
+                    if self._grid[j][k + self.grass_pos[count]] == GRID_CONFIG['CODE']['BLANK']:
+                        self._grid[j][k + self.grass_pos[count]
                                       ] = GRID_CONFIG['CODE']['GRASS']
+
+    def createEnemies(self):
+        max_x = PLAYER_CONFIG['SIZE']
+        x_pos = max_x
+        count = 0
+        flag = True
+
+        while count < self.numEnemies:
+            flag = True
+            if count == 0:
+                x_pos = randint(max_x + 3, max_x + 40)
+            else:
+                x_pos = randint(max_x + 50, max_x + 70)
+            for i in range(0, 7, 1):
+                if self._grid[self.actual_height - 1][x_pos + i] == GRID_CONFIG['CODE']['BLANK'] or self._grid[self.height - 1][x_pos + i] == GRID_CONFIG['CODE']['OBSTACLE']:
+                    flag = False
+                    break
+            if flag is True:
+                count += 1
+                max_x = x_pos
+                self.enemies.append(
+                    Enemy(name="Enemy", height=None, width=None, speed=None, x=x_pos, y=self.height-1))
+            else:
+                continue
+        self.applyEnemies()
+
+    def applyEnemies(self):
+        for count in range(self.numEnemies):
+            for j in range(self.height - 1, self.height - 4, -1):
+                for k in range(0, 3, 1):
+                    if self._grid[j][k + self.enemies[count].pos['x']] == GRID_CONFIG['CODE']['BLANK'] or self._grid[j][k + self.enemies[count].pos['x']] == GRID_CONFIG['CODE']['GRASS']:
+                        self._grid[j][k + self.enemies[count].pos['x']
+                                      ] = GRID_CONFIG['CODE']['ENEMY']
 
     def shift_window(self, player=None):
         if (self.width + self.window_left + (1 * player.speed)) < self.actual_width:
