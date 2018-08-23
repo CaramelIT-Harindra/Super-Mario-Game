@@ -1,4 +1,5 @@
 from config import GRID_CONFIG, PLAYER_CONFIG
+import os
 
 
 class Person:
@@ -56,6 +57,7 @@ class Person:
                         if coin.x == (pos['x'] + j) and coin.y == i:
                             coin.collected(scene=scene)
                             scene.coins.remove(coin)
+                            os.system("aplay -q Sounds/coin.wav &")
                             scene.numCoins -= 1
                             self.score += 1000
 
@@ -66,14 +68,17 @@ class Person:
             if self.name == 'Mario':
                 if scene._grid[y][x] == GRID_CONFIG['CODE']['ENEMY']:
                     PLAYER_CONFIG['LIVES_LOST'] += 1
+                    os.system("aplay -q Sounds/bump.wav &")
             elif self.name == 'Enemy':
                 if scene._grid[y][x] == GRID_CONFIG['CODE']['PLAYER']:
                     PLAYER_CONFIG['LIVES_LOST'] += 1
+                    os.system("aplay -q Sounds/bump.wav &")
         elif self.pos['y'] != pos['y']:
             if self.name == 'Mario':
                 for i in range(scene.numEnemies):
                     for j in range(x, x + PLAYER_CONFIG['SIZE'], 1):
                         if scene.enemies[i].pos['x'] in range(x, x + PLAYER_CONFIG['SIZE'], 1) and (scene._grid[y+1][j] == GRID_CONFIG['CODE']['ENEMY']):
+                            os.system("aplay -q Sounds/kill.wav &")
                             scene.enemies[i].lives -= 1
                             self.score += 1000
                             break

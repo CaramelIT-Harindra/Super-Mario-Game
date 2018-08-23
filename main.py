@@ -19,6 +19,8 @@ player = Player(name="Mario", height=None, width=None, speed=1)
 getch = Get()
 result = False
 
+os.system("aplay -q Sounds/start.wav &")
+
 for i in range(0, config.NUM_LEVELS):
     result = False
     scene = scenes[i]
@@ -26,6 +28,7 @@ for i in range(0, config.NUM_LEVELS):
     player.reset_pos()
     player.createMe(scene=scene)
     score_level.append(player.score)
+
     while GAME_PLAY:
         os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -66,6 +69,9 @@ for i in range(0, config.NUM_LEVELS):
         # time.sleep(1/config.FRAME_RATE)
     if result == False:
         break
+
+os.system("aplay -q Sounds/gameover.wav &")
+
 if result is False:
     os.system('cls' if os.name == 'nt' else 'clear')
 

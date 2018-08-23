@@ -1,5 +1,6 @@
 from person import Person
 from config import PLAYER_CONFIG, GRID_CONFIG
+import os
 
 
 class Player(Person):
@@ -49,6 +50,7 @@ class Player(Person):
                         self.pos['x'] = self.pos['x'] + (1 * self.speed)
                 elif action == 'JUMP':
                     if self.check_surround(scene=scene, pos={'x': self.pos['x'], 'y': self.pos['y'] - 1}):
+                        os.system("aplay -q Sounds/jump.wav &")
                         self.jump_from = self.base - self.pos['y']
                         self.gravity = False
                         self.pos['y'] = self.pos['y'] - 1
