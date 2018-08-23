@@ -12,30 +12,18 @@ def keyAction(key=None, player=None, scene=None):
     if player is None:
         return
     if key is None:
-        # player.clearMe(scene=scene)
-        # player.move(action=None, scene=scene)
-        # player.createMe(scene=scene)
         player.showMe(scene=scene)
     else:
         if key == 'q':
             time.sleep(1/FRAME_RATE)
             return False
         elif key == 'a':
-            # player.clearMe(scene=scene)
-            # player.move('LEFT', scene=scene)
-            # player.createMe(scene=scene)
             player.showMe(action='LEFT', scene=scene)
             time.sleep(1/FRAME_RATE)
         elif key == 'd':
-            # player.clearMe(scene=scene)
-            # player.move('RIGHT', scene=scene)
-            # player.createMe(scene=scene)
             player.showMe(action='RIGHT', scene=scene)
             time.sleep(1/FRAME_RATE)
         elif key == 'w':
-            # player.clearMe(scene=scene)
-            # player.move('JUMP', scene=scene)
-            # player.createMe(scene=scene)
             player.showMe(action='JUMP', scene=scene)
             time.sleep(1/FRAME_RATE)
         elif key == 'i':

@@ -16,10 +16,13 @@ class Player(Person):
         if speed is None:
             speed = 1
         super(Player, self).__init__(name, height, width, speed)
-        self.lives = 5
+        self.lives = PLAYER_CONFIG['START_LIVES']
         self.power = []
         self.coins = 0
         self.score = 0
+
+    def reset_pos(self):
+        self.pos = {'x': 0, 'y': (GRID_CONFIG['HEIGHT'] - 1)}
 
     def createMe(self, scene=None, code=GRID_CONFIG['CODE']['PLAYER']):
         super(Player, self).createMe(scene=scene, code=code)

@@ -3,13 +3,69 @@ from colorama import Fore, Back, Style, init
 from random import randint
 from enemy import Enemy
 
-# init(autoreset=True)
+
+class MovingPlatforms:
+    def __init__(self, left=None, right=None, pos=None, height=None):
+        self.left = left
+        self.right = right
+        self.pos = pos
+        self.height = height
+        self.direction = 0
+
+    def move(self):
+        if self.direction == 0 and self.pos == self.left:
+            self.direction = (self.direction + 1) % 2
+            return
+        elif self.direction == 1 and self.pos == self.right:
+            self.direction = (self.direction + 1) % 2
+            return
+        elif self.direction == 0:
+            self.pos = self.pos - 1
+            return
+        elif self.direction == 1:
+            self.pos = self.pos + 1
+            return
+
+    def createMe(self, scene=None):
+        for i in range(12):
+            scene._grid[self.height][self.pos +
+                                     i] = GRID_CONFIG['CODE']['OBSTACLE']
+
+    def clearMe(self, scene=None):
+        for i in range(12):
+            scene._grid[self.height][self.pos +
+                                     i] = GRID_CONFIG['CODE']['BLANK']
+
+    def refresh(self, scene=None):
+        try:
+            if scene is None:
+                raise AttributeError
+            else:
+                self.clearMe(scene=scene)
+                self.move()
+                self.createMe(scene=scene)
+        except(AttributeError):
+            return
+
+
+class Coin:
+    def __init__(self, x=None, y=None):
+        self.x = x
+        self.y = y
+
+    def collected(self, scene=None):
+        if scene is not None:
+            scene._grid[self.y][self.x] = GRID_CONFIG['CODE']['OBSTACLE']
+
+    def show(self, scene=None):
+        if scene is not None:
+            scene._grid[self.y][self.x] = GRID_CONFIG['CODE']['COIN']
 
 
 class Scene:
     '''Characteristics of game screen'''
 
-    def __init__(self):
+    def __init__(self, level=1):
         '''Contructor for game screen'''
         self.height = GRID_CONFIG['HEIGHT']
         self.width = GRID_CONFIG['WIDTH']
@@ -19,10 +75,12 @@ class Scene:
         self.window_right = GRID_CONFIG['WIDTH'] - 1
         self._grid = [[GRID_CONFIG['CODE']['BLANK']]
                       * self.actual_width for n in range(self.height+2)]
+        self.level = level
+
         self.enemies = []
-        self.numEnemies = 1
+        self.numEnemies = 4
         self.grass_pos = []
-        self.numGrass = 15
+        self.numGrass = 12
         self.pit_pos = []
         self.numPits = 4
         self.cloud_pos = []
@@ -31,25 +89,52 @@ class Scene:
         self.obs_height = []
         self.obs_pos = []
         self.numObs = 4
+        self.platform_pos = []
+        self.platform_height = []
+        self.numPlatforms = 4
+        self.movingPlatforms = []
+        self.num_moving_platforms = 4
+        self.numCoins = 25
+        self.coins = []
+
+    def refresh(self, player=None):
+        if player is None:
+            return
+        count = 0
+        self.applyGrass()
+        self.applyExitPipe()
+
+        while count < self.numEnemies:
+            if self.enemies[count].lives <= 0:
+                self.enemies[count].clearMe(scene=self)
+                self.enemies.pop(count)
+                self.numEnemies -= 1
+            else:
+                self.enemies[count].showMe(scene=self)
+                count += 1
+        if self.level == 3:
+            for i in range(self.num_moving_platforms):
+                self.movingPlatforms[i].refresh(scene=self)
+
+        # player.check_surround(
+        #     scene=self, pos={'x': player.pos['x'] + 1, 'y': player.pos['y']})
+        # player.check_surround(
+        #     scene=self, pos={'x': player.pos['x'] - 1, 'y': player.pos['y']})
 
     def render(self, player=None, enemies=None):
         if player is None:
             return
         else:
-            self.applyGrass()
             self.applyExitPipe()
-
-            for i in range(self.numEnemies):
-                if self.enemies[i].lives <= 0:
-                    self.enemies.pop(i)
-                    self.numEnemies -= 1
-                    continue
-                self.enemies[i].showMe(scene=self)
-
             for row in range(self.actual_height):
                 for col in range(self.window_left, self.width+self.window_left, 1):
                     if self._grid[row][col] == GRID_CONFIG['CODE']['BLANK']:
-                        print(Back.LIGHTCYAN_EX + " ", end='')
+                        if self.level == 1:
+                            print(Back.LIGHTCYAN_EX + " ", end='')
+                        elif self.level == 2:
+                            print(Back.LIGHTYELLOW_EX + " ", end='')
+                        elif self.level == 3:
+                            print(Back.LIGHTCYAN_EX + " ", end='')
                     elif self._grid[row][col] == GRID_CONFIG['CODE']['PLAYER']:
                         print(Back.RED + " ", end='')
                     elif self._grid[row][col] == GRID_CONFIG['CODE']['CLOUD']:
@@ -62,6 +147,8 @@ class Scene:
                         print(Back.LIGHTBLUE_EX + " ", end='')
                     elif self._grid[row][col] == GRID_CONFIG['CODE']['GRASS']:
                         print(Back.GREEN + " ", end='')
+                    elif self._grid[row][col] == GRID_CONFIG['CODE']['COIN']:
+                        print(Back.YELLOW + " ", end='')
                     else:
                         self._grid[row][col] = 0
                         print(Back.GREEN + " ", end='')
@@ -73,24 +160,13 @@ class Scene:
         self.createPits()
         self.createGrass()
         self.createObstacles()
-        # self.createEnemies()
+        self.createEnemies()
+        if self.level < 3:
+            self.createPlatforms()
+        elif self.level == 3:
+            self.createMovingPlatforms()
         self.applyExitPipe()
-
-        self.enemies.append(Enemy(name="Enemy", height=None,
-                                  width=None, speed=None, x=4, y=self.height-1))
-        self.enemies[0].createMe(scene=self, code=GRID_CONFIG['CODE']['ENEMY'])
-
-        offset = 4
-        for h in range(5, self.height - 10, 2):
-            for i in range(5):
-                self._grid[self.height -
-                           h][offset+i] = GRID_CONFIG['CODE']['OBSTACLE']
-            offset += 8
-
-        for h in range(self.height - 10, 3, -2):
-            for i in range(5):
-                self._grid[h][offset+i] = GRID_CONFIG['CODE']['OBSTACLE']
-            offset += 8
+        self.createCoins()
 
     def createSurface(self):
         for i in range(self.height, self.actual_height, 1):
@@ -226,9 +302,12 @@ class Scene:
         while count < self.numEnemies:
             flag = True
             if count == 0:
-                x_pos = randint(max_x + 3, max_x + 40)
+                x_pos = randint(max_x + 3, self.pit_pos[count])
+            elif count == (self.numEnemies - 1):
+                x_pos = randint(
+                    self.pit_pos[count - 1], self.actual_width - 15)
             else:
-                x_pos = randint(max_x + 50, max_x + 70)
+                x_pos = randint(self.pit_pos[count - 1], self.pit_pos[count])
             for i in range(0, 7, 1):
                 if self._grid[self.actual_height - 1][x_pos + i] == GRID_CONFIG['CODE']['BLANK'] or self._grid[self.height - 1][x_pos + i] == GRID_CONFIG['CODE']['OBSTACLE']:
                     flag = False
@@ -236,19 +315,53 @@ class Scene:
             if flag is True:
                 count += 1
                 max_x = x_pos
-                self.enemies.append(
-                    Enemy(name="Enemy", height=None, width=None, speed=None, x=x_pos, y=self.height-1))
+                if self.level == 1:
+                    self.enemies.append(Enemy(
+                        name="Enemy", height=None, width=None, speed=1, x=x_pos, y=self.height-1))
+                elif self.level > 1:
+                    self.enemies.append(Enemy(
+                        name="Enemy", height=None, width=None, speed=2, x=x_pos, y=self.height-1))
             else:
                 continue
         self.applyEnemies()
 
     def applyEnemies(self):
-        for count in range(self.numEnemies):
-            for j in range(self.height - 1, self.height - 4, -1):
-                for k in range(0, 3, 1):
-                    if self._grid[j][k + self.enemies[count].pos['x']] == GRID_CONFIG['CODE']['BLANK'] or self._grid[j][k + self.enemies[count].pos['x']] == GRID_CONFIG['CODE']['GRASS']:
-                        self._grid[j][k + self.enemies[count].pos['x']
-                                      ] = GRID_CONFIG['CODE']['ENEMY']
+        for i in range(self.numEnemies):
+            self.enemies[i].createMe(
+                scene=self, code=GRID_CONFIG['CODE']['ENEMY'])
+
+    def createPlatforms(self):
+        self.numPlatforms = self.numPits
+        for i in range(self.numPits):
+            self.platform_pos.append(self.pit_pos[i] - 4)
+            self.platform_height.append(
+                randint(self.height - 6, self.height - 5))
+        self.applyPlatforms()
+
+    def createMovingPlatforms(self):
+        self.num_moving_platforms = self.numPits
+        for i in range(self.num_moving_platforms):
+            self.movingPlatforms.append(MovingPlatforms(left=(self.pit_pos[i] - 4), right=(
+                self.pit_pos[i] + 5), pos=(self.pit_pos[i] - 4), height=randint(self.height - 6, self.height - 5)))
+            self.movingPlatforms[i].createMe(scene=self)
+
+    def applyPlatforms(self):
+        for i in range(self.num_moving_platforms):
+            for j in range(12):
+                self._grid[self.platform_height[i]][self.platform_pos[i] +
+                                                    j] = GRID_CONFIG['CODE']['OBSTACLE']
+
+    def createCoins(self):
+        count = 0
+        x = 0
+        y = 0
+        while count < self.numCoins:
+            x = randint(1, self.actual_width - 15)
+            y = randint(self.height - 9, self.height - 7)
+            if self._grid[y][x] == GRID_CONFIG['CODE']['BLANK']:
+                self.coins.append(Coin(x=x, y=y))
+                self.coins[count].show(scene=self)
+                count += 1
 
     def shift_window(self, player=None):
         if (self.width + self.window_left + (1 * player.speed)) < self.actual_width:

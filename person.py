@@ -1,4 +1,4 @@
-from config import GRID_CONFIG
+from config import GRID_CONFIG, PLAYER_CONFIG
 
 
 class Person:
@@ -48,14 +48,34 @@ class Person:
     def check_surround(self, scene=None, pos=None):
         for i in range(pos['y'], pos['y'] - self.height, -1):
             for j in range(self.width):
-                if (scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['BLANK'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['CLOUD'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['EXIT'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['GRASS']) or scene._grid[i][pos['x']+j] == GRID_CONFIG['CODE']['PLAYER']:
-                    self.check_clash(scene=scene, y=i, x=pos['x']+j)
+                if (scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['BLANK'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['CLOUD'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['EXIT'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['GRASS'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['COIN']) or scene._grid[i][pos['x']+j] == GRID_CONFIG['CODE']['PLAYER']:
+                    self.check_clash(scene=scene, y=i, x=pos['x']+j, pos=pos)
                     return False
+                if self.name == 'Mario' and scene._grid[i][pos['x']+j] == GRID_CONFIG['CODE']['COIN']:
+                    for coin in scene.coins:
+                        if coin.x == (pos['x'] + j) and coin.y == i:
+                            coin.collected(scene=scene)
+                            scene.coins.remove(coin)
+                            scene.numCoins -= 1
+                            self.score += 1000
+
         return True
 
-    def check_clash(self, scene=None, y=None, x=None):
-        if self.name == 'Mario':
-            if scene._grid[y][x] == GRID_CONFIG['CODE']['ENEMY']:
-                self.lives -= 1
-        elif self.name == 'Enemy':
-            return
+    def check_clash(self, scene=None, y=None, x=None, pos=None):
+        if self.pos['y'] == pos['y']:
+            if self.name == 'Mario':
+                if scene._grid[y][x] == GRID_CONFIG['CODE']['ENEMY']:
+                    PLAYER_CONFIG['LIVES_LOST'] += 1
+            elif self.name == 'Enemy':
+                if scene._grid[y][x] == GRID_CONFIG['CODE']['PLAYER']:
+                    PLAYER_CONFIG['LIVES_LOST'] += 1
+        elif self.pos['y'] != pos['y']:
+            if self.name == 'Mario':
+                for i in range(scene.numEnemies):
+                    for j in range(x, x + PLAYER_CONFIG['SIZE'], 1):
+                        if scene.enemies[i].pos['x'] in range(x, x + PLAYER_CONFIG['SIZE'], 1) and (scene._grid[y+1][j] == GRID_CONFIG['CODE']['ENEMY']):
+                            scene.enemies[i].lives -= 1
+                            self.score += 1000
+                            break
+                    if scene.enemies[i].lives == 0:
+                        break
