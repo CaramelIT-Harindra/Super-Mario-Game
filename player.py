@@ -23,9 +23,11 @@ class Player(Person):
         self.score = 0
 
     def reset_pos(self):
+        '''Reset the position of the player to start'''
         self.pos = {'x': 0, 'y': (GRID_CONFIG['HEIGHT'] - 1)}
 
     def createMe(self, scene=None, code=GRID_CONFIG['CODE']['PLAYER']):
+        '''Function that creates the player on the seen'''
         super(Player, self).createMe(scene=scene, code=code)
 
     def move(self, action=None, scene=None):

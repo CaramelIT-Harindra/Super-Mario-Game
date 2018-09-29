@@ -29,9 +29,11 @@ class Enemy(Person):
         self.direction = 0
 
     def createMe(self, scene=None, code=GRID_CONFIG['CODE']['ENEMY']):
+        '''Create the board'''
         super(Enemy, self).createMe(scene=scene, code=code)
 
     def reverse_direction(self):
+        '''Change the direction of enemy'''
         self.direction = (self.direction + 1) % 2
 
     def move(self, action=None, scene=None):

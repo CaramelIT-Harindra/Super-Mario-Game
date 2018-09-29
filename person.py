@@ -19,9 +19,11 @@ class Person:
         self.jump_from = self.base
 
     def move(self):
+        '''Function to be over ridden by child classes'''
         pass
 
     def createMe(self, scene=None, code=None):
+        '''Function to create the Player o the board'''
         if scene is None:
             return
         if code is None:
@@ -31,6 +33,7 @@ class Person:
                 scene._grid[i][self.pos['x']+j] = code
 
     def clearMe(self, scene=None):
+        '''Function to clear the Player o the board'''
         if scene is None:
             return
         for i in range(self.pos['y'], self.pos['y'] - self.height, -1):
@@ -38,6 +41,7 @@ class Person:
                 scene._grid[i][self.pos['x']+j] = GRID_CONFIG['CODE']['BLANK']
 
     def showMe(self, action=None, scene=None):
+        '''Function to show the player on the grid when scene map is rendered'''
         if scene is not None:
             self.clearMe(scene=scene)
             if action is not None:
@@ -47,6 +51,7 @@ class Person:
             self.createMe(scene=scene)
 
     def check_surround(self, scene=None, pos=None):
+        '''Check for ragging'''
         for i in range(pos['y'], pos['y'] - self.height, -1):
             for j in range(self.width):
                 if (scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['BLANK'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['CLOUD'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['EXIT'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['GRASS'] and scene._grid[i][pos['x']+j] != GRID_CONFIG['CODE']['COIN']) or scene._grid[i][pos['x']+j] == GRID_CONFIG['CODE']['PLAYER']:
@@ -58,17 +63,21 @@ class Person:
                             coin.collected(scene=scene)
                             scene.coins.remove(coin)
                             os.system("aplay -q Sounds/coin.wav &")
-                            scene.numCoins -= 1
+                            # scene.numCoins -= 1
                             self.score += 1000
 
         return True
 
     def check_clash(self, scene=None, y=None, x=None, pos=None):
+        '''Check for clashes between  player and other entities'''
         if self.pos['y'] == pos['y']:
             if self.name == 'Mario':
                 if scene._grid[y][x] == GRID_CONFIG['CODE']['ENEMY']:
                     PLAYER_CONFIG['LIVES_LOST'] += 1
+
+                    # Sound for losing a life
                     os.system("aplay -q Sounds/bump.wav &")
+
             elif self.name == 'Enemy':
                 if scene._grid[y][x] == GRID_CONFIG['CODE']['PLAYER']:
                     PLAYER_CONFIG['LIVES_LOST'] += 1

@@ -5,6 +5,8 @@ from enemy import Enemy
 
 
 class MovingPlatforms:
+    '''Characteristics of a moving platform/bridge'''
+
     def __init__(self, left=None, right=None, pos=None, height=None):
         self.left = left
         self.right = right
@@ -13,6 +15,7 @@ class MovingPlatforms:
         self.direction = 0
 
     def move(self):
+        '''Function to oscillate the platform/bridge'''
         if self.direction == 0 and self.pos == self.left:
             self.direction = (self.direction + 1) % 2
             return
@@ -27,16 +30,19 @@ class MovingPlatforms:
             return
 
     def createMe(self, scene=None):
+        '''Function to display what is in the park'''
         for i in range(12):
             scene._grid[self.height][self.pos +
                                      i] = GRID_CONFIG['CODE']['OBSTACLE']
 
     def clearMe(self, scene=None):
+        '''Function to clear what is in the grid'''
         for i in range(12):
             scene._grid[self.height][self.pos +
                                      i] = GRID_CONFIG['CODE']['BLANK']
 
     def refresh(self, scene=None):
+        '''Function to refresh what is in the grid'''
         try:
             if scene is None:
                 raise AttributeError
@@ -49,15 +55,19 @@ class MovingPlatforms:
 
 
 class Coin:
+    '''Characteristics of a coin'''
+
     def __init__(self, x=None, y=None):
         self.x = x
         self.y = y
 
     def collected(self, scene=None):
+        '''Function to remove coin from scene when collected'''
         if scene is not None:
             scene._grid[self.y][self.x] = GRID_CONFIG['CODE']['OBSTACLE']
 
     def show(self, scene=None):
+        '''Function to show the coin'''
         if scene is not None:
             scene._grid[self.y][self.x] = GRID_CONFIG['CODE']['COIN']
 
@@ -98,12 +108,17 @@ class Scene:
         self.coins = []
 
     def refresh(self, player=None):
+        '''Function to refresh the positions of some entities before
+        updating player'''
         if player is None:
             return
         count = 0
+
+        # Print the constant objects that cover or hide behind Mario
         self.applyGrass()
         self.applyExitPipe()
 
+        # Generate enemeies
         while count < self.numEnemies:
             if self.enemies[count].lives <= 0:
                 self.enemies[count].clearMe(scene=self)
@@ -116,12 +131,8 @@ class Scene:
             for i in range(self.num_moving_platforms):
                 self.movingPlatforms[i].refresh(scene=self)
 
-        # player.check_surround(
-        #     scene=self, pos={'x': player.pos['x'] + 1, 'y': player.pos['y']})
-        # player.check_surround(
-        #     scene=self, pos={'x': player.pos['x'] - 1, 'y': player.pos['y']})
-
     def render(self, player=None, enemies=None):
+        '''Render game scenery with player, enemies and other obstacles'''
         if player is None:
             return
         else:
@@ -155,6 +166,7 @@ class Scene:
                 print(Back.RESET + '')
 
     def createMe(self):
+        '''Function to generate the mostly randomly generated map'''
         self.createSurface()
         self.createClouds()
         self.createPits()
@@ -169,11 +181,13 @@ class Scene:
         self.createCoins()
 
     def createSurface(self):
+        '''Function to create bottom surface'''
         for i in range(self.height, self.actual_height, 1):
             for j in range(self.actual_width):
                 self._grid[i][j] = GRID_CONFIG['CODE']['OBSTACLE']
 
     def createPits(self):
+        '''Function to create pits to fall off the surface'''
         max_x = PLAYER_CONFIG['SIZE']
         x_pos = max_x
 
@@ -187,6 +201,8 @@ class Scene:
         self.applyPits()
 
     def applyPits(self):
+        '''Function to translate the pits to the game by putting its code
+        in the file'''
         for i in range(self.numPits):
             for j in range(self.height, self.actual_height, 1):
                 for k in range(0, 10 - 1, 1):
@@ -194,6 +210,7 @@ class Scene:
                                   ] = GRID_CONFIG['CODE']['BLANK']
 
     def createObstacles(self):
+        '''Function to create obstacles'''
         max_x = PLAYER_CONFIG['SIZE']
         x_pos = max_x
         count = 0
@@ -221,6 +238,7 @@ class Scene:
         self.applyObs()
 
     def applyObs(self):
+        '''Function to put the obstacles in the scene'''
         for count in range(self.numObs):
             for j in range(self.height - self.obs_height[count-1], self.height, 1):
                 for k in range(0, 7, 1):
@@ -228,6 +246,7 @@ class Scene:
                                   ] = GRID_CONFIG['CODE']['OBSTACLE']
 
     def applyExitPipe(self):
+        '''Function to add exit pipe at the end'''
         for i in range(self.height - 5, self.height - 1, 1):
             for j in range(self.actual_width - 8, self.actual_width, 1):
                 self._grid[i][j] = GRID_CONFIG['CODE']['EXIT']
@@ -238,6 +257,7 @@ class Scene:
                                         i] = GRID_CONFIG['CODE']['EXIT']
 
     def createClouds(self):
+        '''Function to create clouds in the scene'''
         max_x = PLAYER_CONFIG['SIZE']
         x_pos = max_x
 
@@ -255,6 +275,7 @@ class Scene:
         self.applyClouds()
 
     def applyClouds(self):
+        '''Function to put the clouds in the scene'''
         for i in range(self.numClouds):
             for j in range(0, 3, 1):
                 for k in range(0, 10 - 1, 1):
@@ -262,6 +283,7 @@ class Scene:
                                                          self.cloud_pos[i]] = GRID_CONFIG['CODE']['CLOUD']
 
     def createGrass(self):
+        '''Function to create grass in the scene'''
         max_x = PLAYER_CONFIG['SIZE']
         x_pos = max_x
         count = 0
@@ -286,6 +308,7 @@ class Scene:
         self.applyGrass()
 
     def applyGrass(self):
+        '''Function to put the grass in the scene'''
         for count in range(self.numGrass):
             for j in range(self.height - 1, self.height - 3, -1):
                 for k in range(0, 3, 1):
@@ -294,6 +317,7 @@ class Scene:
                                       ] = GRID_CONFIG['CODE']['GRASS']
 
     def createEnemies(self):
+        '''Function to create enemies in the scene'''
         max_x = PLAYER_CONFIG['SIZE']
         x_pos = max_x
         count = 0
@@ -326,11 +350,13 @@ class Scene:
         self.applyEnemies()
 
     def applyEnemies(self):
+        '''Function to put enemies in the scene'''
         for i in range(self.numEnemies):
             self.enemies[i].createMe(
                 scene=self, code=GRID_CONFIG['CODE']['ENEMY'])
 
     def createPlatforms(self):
+        '''Function to create platforms in the scene'''
         self.numPlatforms = self.numPits
         for i in range(self.numPits):
             self.platform_pos.append(self.pit_pos[i] - 4)
@@ -339,6 +365,7 @@ class Scene:
         self.applyPlatforms()
 
     def createMovingPlatforms(self):
+        '''Function to put the moving platforms in the scene'''
         self.num_moving_platforms = self.numPits
         for i in range(self.num_moving_platforms):
             self.movingPlatforms.append(MovingPlatforms(left=(self.pit_pos[i] - 4), right=(
@@ -346,12 +373,14 @@ class Scene:
             self.movingPlatforms[i].createMe(scene=self)
 
     def applyPlatforms(self):
+        '''Function to put the platforms in the scene'''
         for i in range(self.num_moving_platforms):
             for j in range(12):
                 self._grid[self.platform_height[i]][self.platform_pos[i] +
                                                     j] = GRID_CONFIG['CODE']['OBSTACLE']
 
     def createCoins(self):
+        '''Function to put coins in the scene'''
         count = 0
         x = 0
         y = 0
@@ -364,6 +393,7 @@ class Scene:
                 count += 1
 
     def shift_window(self, player=None):
+        '''Function to shift visible window of the scene'''
         if (self.width + self.window_left + (1 * player.speed)) < self.actual_width:
             self.window_left += (1 * player.speed)
             self.window_right += (1 * player.speed)
